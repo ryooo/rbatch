@@ -1,0 +1,323 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Rbatch by fetaro</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Rbatch</h1>
+        <p>ruby-based batch framework</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/fetaro/rbatch" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/fetaro/rbatch/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/fetaro/rbatch/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><a href="https://github.com/fetaro/rbatch/blob/master/README.md" title="english">[English]</a> <a href="https://github.com/fetaro/rbatch/blob/master/README.ja.md" title="japanese">[Japanese]</a></p>
+
+<h1>RBatch:Ruby-base Simple Batch Script Framework</h1>
+
+<h2>About RBatch</h2>
+
+<p>This is a Ruby-base Batch Script Framework. RBatch offer a convenient function as a framework, when you write a batch script such as "data backup script" or "proccess start script".</p>
+
+<p>There are following functions. </p>
+
+<ul>
+<li>Auto Logging</li>
+<li>Auto Config Reading</li>
+<li>External Command Wrapper </li>
+<li>Directory Structure convention</li>
+<li>Double Run Check</li>
+</ul><p>This work on only Ruby 1.9.x or more later.</p>
+
+<h3>Auto Logging</h3>
+
+<p>Use Auto Logging block, RBatch automatically write to logfile.
+Log file default location is "(script file path)/../log/YYYYMMDD_HHMMSS_${PROG_NAME}.log" .
+If exception occuerd, then RBatch write stack trace to logfile.</p>
+
+<p>sample</p>
+
+<p>script : ./bin/sample1.rb</p>
+
+<pre><code>require 'rbatch'
+
+RBatch::Log.new(){ |log|  # Logging block
+  log.info "info string"
+  log.error "error string"
+  raise "exception"
+}
+</code></pre>
+
+<p>logfile : ./log/20121020_005953_sample1.log</p>
+
+<pre><code># Logfile created on 2012-10-20 00:59:53 +0900 by logger.rb/25413
+[2012-10-20 00:59:53 +900] [INFO ] info string
+[2012-10-20 00:59:53 +900] [ERROR] error string
+[2012-10-20 00:59:53 +900] [FATAL] Caught exception; existing 1
+[2012-10-20 00:59:53 +900] [FATAL] exception (RuntimeError)
+    [backtrace] test.rb:6:in `block in &lt;main&gt;'
+    [backtrace] /usr/local/lib/ruby192/lib/ruby/gems/1.9.1/gems/rbatch-1.0.0/lib/rbatch/auto_logger.rb:37:in `initialize'
+    [backtrace] test.rb:3:in `new'
+    [backtrace] test.rb:3:in `&lt;main&gt;'
+</code></pre>
+
+<h3>Auto Config Reading</h3>
+
+<p>RBatch easy to read config file (located on "(script file path)/../conf/${PROG_NAME}.yaml")</p>
+
+<p>sample</p>
+
+<p>config : ./conf/sample2.yaml</p>
+
+<pre><code>key: value
+array:
+ - item1
+ - item2
+ - item3
+</code></pre>
+
+<p>script : ./bin/sample2.rb</p>
+
+<pre><code>require 'rbatch'
+p RBatch::config
+=&gt; {"key" =&gt; "value", "array" =&gt; ["item1", "item2", "item3"]}
+p RBatch::config["key"]
+=&gt; "value"
+
+# If key does not exist , raise exception
+p RBatch::config["not_exist"]
+=&gt; Raise Exception
+</code></pre>
+
+<h3>External Command Wrapper</h3>
+
+<p>RBatch provide a function which wrap external command (such as 'ls').</p>
+
+<p>This function return a result object which contain command's STDOUT, STDERR ,and exit status.</p>
+
+<p>sample</p>
+
+<pre><code>require 'rbatch'
+r = RBatch::cmd("ls")
+p r.stdout
+=&gt; "fileA\nfileB\n"
+p r.stderr
+=&gt; ""
+p r.status
+=&gt; 0
+</code></pre>
+
+<h3>Directory Structure Convention</h3>
+
+<p>Follow the axiom of "convention over configuration", RBatch restrict file naming rule and directory structure.</p>
+
+<p>For exsample, If you make "bin/hoge.rb", you should name config file to "conf/hoge.yaml". And the name of log file is decided on "log/YYYYMMDD_HHMMSS_hoge.rb"</p>
+
+<p>In this way, maintainability and readability of batch script get higher.</p>
+
+<pre><code>./
+ |-bin
+ |  |- hoge.rb
+ |  |- bar.rb
+ |-conf
+ |  |- hoge.yaml
+ |  |- bar.yaml
+ |-log
+    |- YYYYMMDD_HHMMSS_hoge.log
+    |- YYYYMMDD_HHMMSS_bar.log
+</code></pre>
+
+<h3>Double Run Check</h3>
+
+<p>Forbit double run of the RBatch script by writing option "forbid_double_run: true" to the common configuration file.</p>
+
+<h2>Quick Start</h2>
+
+<h3>Step1: Install</h3>
+
+<pre><code># gem install rbatch
+</code></pre>
+
+<h3>Step2: Make directories</h3>
+
+<pre><code>$ mkdir bin log conf
+</code></pre>
+
+<h3>Step3: Write batch script</h3>
+
+<p>for bin/backup.rb</p>
+
+<pre><code>require 'rbatch'
+
+RBatch::Log.new(){|log|
+  log.info( "start backup" )
+  result = RBatch::cmd( "cp -p /var/log/message /backup")
+  log.info( result )
+  log.error ( "backup failed") if result.status != 0
+}
+</code></pre>
+
+<h3>Step4: Run</h3>
+
+<pre><code>$ ruby bin/backup.rb
+</code></pre>
+
+<h3>Step5: Check</h3>
+
+<p>Log file is generated automatically. </p>
+
+<pre><code>$ cat log/YYYYMMDD_HHMMSS_backup.log
+
+# Logfile created on 2012-10-20 00:19:23 +0900 by logger.rb/25413
+[2012-10-20 00:19:23 +0900] [INFO ] start backup
+[2012-10-20 00:19:23 +0900] [INFO ] {:stdout=&gt;"", :stderr=&gt;"cp: cannot stat `/var/log/message': No such file or directory\n", :status=&gt;1}
+[2012-10-20 00:19:23 +0900] [ERROR] backup failed
+</code></pre>
+
+<h2>Manual</h2>
+
+<h3>RBatch Grobal Config File</h3>
+
+<p>If you make follow config file, option value effect to all scripts.</p>
+
+<pre><code>(script file path)/../conf/rbatch.yaml
+</code></pre>
+
+<p>Config Sample</p>
+
+<pre><code># RBatch Common Config
+#
+# This file format is YAML
+#
+
+# -------------------
+# Global setting
+# -------------------
+
+# Forbit Script Double Run
+#
+#   Default : false
+#
+# If this option is true, two same script cannot start at the same time. 
+#
+#forbid_double_run: true
+#forbid_double_run: false
+
+# -------------------
+# Cmd setting
+# -------------------
+
+# Raise Exception
+#
+#   Default : false
+#
+# If command exit status is not 0, raise exception.
+#
+#cmd_raise : true
+#cmd_raise : false
+
+
+# -------------------
+# Log setting
+# -------------------
+
+# Log File Name
+#
+#   Default : "&lt;date&gt;_&lt;time&gt;_&lt;prog&gt;.log"
+#
+#   Reservation words
+#   &lt;data&gt; --&gt; replace to YYYYMMDD date string
+#   &lt;time&gt; --&gt; replace to hhmmss time string
+#   &lt;prog&gt; --&gt; Program file base name (except extention)
+#
+#log_name : "&lt;date&gt;_&lt;time&gt;_&lt;prog&gt;.log"
+#log_name : "&lt;date&gt;_&lt;prog&gt;.log"
+
+# Log Output Directory
+#
+#   Default : "(Script path)/../log"
+#
+#log_dir : "/tmp/log"
+
+# Append log or not
+#
+#   Default : ture
+#
+#log_append : true
+#log_append : false
+
+# Log Level
+#
+#   Default : "info"
+#   Value   : "debug","info","wran","error","fatal"
+#
+#log_level : "debug"
+#log_level : "info"
+#log_level : "warn"
+#log_level : "error"
+#log_level : "fatal"
+
+# Print log-string both file and STDOUT
+#
+#   Default : false
+#
+#log_stdout : true
+#log_stdout : false
+
+# Delete old log files
+#
+# If this is true, delete old log file when RBatch::Log.new is called.
+# A log file to delete is a log file which was made by the RBatch::Log instance, 
+# and log filename format include "&lt;date&gt;".
+#
+#   Default : false
+#
+#log_delete_old_log: true
+#log_delete_old_log: false
+
+# The day of leaving log files
+#
+#   Default : 7
+#
+#log_delete_old_log_date: 14
+
+
+</code></pre>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/fetaro">fetaro</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
